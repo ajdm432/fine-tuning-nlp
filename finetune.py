@@ -32,19 +32,19 @@ DATA_PATH = "data/cnn_dailymail"
 def load_data():
     if not os.path.isdir(DATA_PATH):
         print("Loading Dataset...")
-        testdata = load_dataset(DATASET, name=SUBSET, split="test")
+        data = load_dataset(DATASET, name=SUBSET)
         # save dataset
         testdata.save_to_disk(DATA_PATH)
         # split up dataset
-        # train_data = data["train"]
-        # val_data = data["validation"]
-        # test_data = data["test"]
+        train_data = data["train"]
+        val_data = data["validation"]
+        test_data = data["test"]
     else:
-        testdata = load_from_disk(DATA_PATH)
-        # train_data = data["train"]
-        # val_data = data["validation"]
-        # test_data = data["test"]
-    return None, None, testdata
+        data = load_from_disk(DATA_PATH)
+        train_data = data["train"]
+        val_data = data["validation"]
+        test_data = data["test"]
+    return train_data, val_data, test_data
 
 def promptify_list(data):
     output_text = []
