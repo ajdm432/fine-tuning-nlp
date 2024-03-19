@@ -56,7 +56,7 @@ def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL}...")
     if not os.path.isdir(BASE_MODEL_FILE):
         model = AutoAWQForCausalLM.from_quantized(
-            BASE_MODEL_FILE,
+            BASE_MODEL,
             trust_remote_code=True,
             safetensors=True,
             fuse_layers=False,
