@@ -8,7 +8,6 @@ from transformers import (
 )
 from awq import AutoAWQForCausalLM
 from trl import SFTTrainer
-import wandb
 from modeleval import evaluate_model
 
 # get preferred device
@@ -120,7 +119,6 @@ def train(model, tokenizer, train_dataset, val_dataset):
         save_strategy="epoch",
         group_by_length=True,
         output_dir=OUTPUT_DIR,
-        report_to="wandb",
         save_safetensors=True,
         lr_scheduler_type="cosine",
         seed=42,
@@ -156,7 +154,6 @@ if __name__=='__main__':
 
     if (not os.path.isdir(TRAINED_MODEL_FILE) or opts.do_training) and not opts.use_base:
         print("Could not find trained model file, begining training...")
-        wandb.init(project="llama-summarization", entity="alexmountain")
         traindata, valdata, testdata = load_data()
         model, tokenizer = load_base_model_and_tokenizer()
         model.config.use_cache = False

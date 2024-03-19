@@ -2,9 +2,7 @@ torch
 transformers
 datasets
 peft
-bitsandbytes
 trl
-wandb
 nltk
 rouge_score
 evaluate
