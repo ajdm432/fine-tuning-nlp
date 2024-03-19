@@ -5,7 +5,7 @@ import torch
 METRIC = "rouge"
 NUM_EXAMPLES = 3
 MAX_SEQ_LENGTH = 2048
-MAX_OUT_LENGTH = 100
+MAX_OUT_LENGTH = 150
 DEFAULT_PROMPT = f"Summarize the following article in no more than {MAX_OUT_LENGTH} words.".strip()
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -28,7 +28,7 @@ def example_input_output(model, tokenizer, data):
         tok = tokenizer(prompt, padding=True, return_tensors='pt', max_length=MAX_SEQ_LENGTH, truncation=True)
         model_out = model.generate(input_ids=tok['input_ids'].to(DEVICE),
                                    attention_mask=tok['attention_mask'].to(DEVICE),
-                                   max_length=MAX_SEQ_LENGTH,
+                                   max_new_tokens=MAX_SEQ_LENGTH,
                                    num_beams=5,
                                    early_stopping=True)
         new_tokens = model_out[0][tok['input_ids'].shape[-1]:]
