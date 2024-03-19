@@ -32,7 +32,7 @@ def example_input_output(model, tokenizer, data):
                                    top_p=0.95,
                                    top_k=40,
                                    max_new_tokens=MAX_OUT_LENGTH)
-        new_tokens = model_out[0][tok.shape[1]:]
+        new_tokens = model_out[0]
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         print("OUTPUT:")
         print(output)
