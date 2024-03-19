@@ -21,7 +21,7 @@ def evaluate_model(model, tokenizer, data):
 
 def example_input_output(model, tokenizer, data):
     print("\nExample Input/Output...\n")
-    pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_length=MAX_OUT_LENGTH)
+    pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_new_tokens=MAX_OUT_LENGTH)
     for i in range(NUM_EXAMPLES):
         prompt = promptify_single(data["article"][i])
         print("INPUT:")
