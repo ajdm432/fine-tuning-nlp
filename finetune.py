@@ -3,11 +3,10 @@ import torch
 from datasets import load_dataset, load_from_disk
 from peft import LoraConfig
 from transformers import (
-    AutoModelForCausalLM,
     AutoTokenizer,
-    BitsAndBytesConfig,
     TrainingArguments,
 )
+from awq import AutoAWQForCausalLM
 from trl import SFTTrainer
 import wandb
 from modeleval import evaluate_model
@@ -56,25 +55,23 @@ def promptify_list(data):
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL}...")
     if not os.path.isdir(BASE_MODEL_FILE):
-        model = AutoModelForCausalLM.from_pretrained(
-            BASE_MODEL,
-            use_safetensors=True,
-            load_in_4bit=True,
+        model = AutoAWQForCausalLM.from_quantized(
+            BASE_MODEL_FILE,
             trust_remote_code=True,
-            device_map="auto",
+            safetensors=True,
+            fuse_layers=False,
         )
         model.save_pretrained(BASE_MODEL_FILE, from_pt=True)
     else:
-        model = AutoModelForCausalLM.from_pretrained(
+        model = AutoAWQForCausalLM.from_quantized(
             BASE_MODEL_FILE,
-            use_safetensors=True,
-            load_in_4bit=True,
             trust_remote_code=True,
-            device_map="auto",
+            safetensors=True,
+            fuse_layers=False,
         )
 
     print(f"Loading Tokenizer From Base Model...")
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
 
@@ -82,15 +79,14 @@ def load_base_model_and_tokenizer():
 
 def load_trained_model_and_tokenizer():
     print(f"Loading Saved Model...")
-    model = AutoModelForCausalLM.from_pretrained(
-        TRAINED_MODEL_FILE,
-        use_safetensors=True,
-        load_in_4bit=True,
+    model = AutoAWQForCausalLM.from_pretrained(
+        BASE_MODEL_FILE,
         trust_remote_code=True,
-        device_map="auto",
+        safetensors=True,
+        fuse_layers=False,
     )
     print(f"Loading Model Tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE)
+    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, trust_remote_code=True,)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
     return model, tokenizer

@@ -8,3 +8,4 @@ wandb
 nltk
 rouge_score
 evaluate
+AutoAWQ
