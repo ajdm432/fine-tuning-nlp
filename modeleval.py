@@ -4,15 +4,14 @@ import torch
 
 METRIC = "rouge"
 NUM_EXAMPLES = 3
-MAX_SEQ_LENGTH = 2048
-MAX_OUT_LENGTH = 150
-DEFAULT_PROMPT = f"Summarize the following article in no more than {MAX_OUT_LENGTH} words.".strip()
+MAX_SEQ_LENGTH = 4096
+MAX_OUT_LENGTH = 800
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 metric = evaluate.load(METRIC)
 
-def promptify_single(article, prompt=DEFAULT_PROMPT):
-    return f"{DEFAULT_PROMPT}\nArticle: {article}"
+def promptify_single(article):
+    return f"Article: {article}\nSummary:"
 
 def evaluate_model(model, tokenizer, data):
     example_input_output(model, tokenizer, data)
