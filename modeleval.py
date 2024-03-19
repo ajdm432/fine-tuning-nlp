@@ -54,7 +54,7 @@ def rouge_test(model, tokenizer, data):
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         outputs.append(output)
 
-    results = metric.compute(predictions=outputs, references=targets)
+    results = metric.compute(predictions=outputs, references=targets[:10])
     rouge1 = results['rouge1']
     rouge2 = results['rouge2']
     rougeL = results['rougeL']
