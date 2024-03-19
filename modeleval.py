@@ -1,4 +1,5 @@
 from tqdm import tqdm
+from transformers import pipeline
 import evaluate
 import torch
 
@@ -12,7 +13,7 @@ DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 metric = evaluate.load(METRIC)
 
 def promptify_single(article, prompt=DEFAULT_PROMPT):
-    return f"[INST]{prompt}\nArticle: {article}[\INST]"
+    return f"<s>[INST]{prompt}\nArticle: {article}[\INST]"
 
 def evaluate_model(model, tokenizer, data):
     example_input_output(model, tokenizer, data)
@@ -20,31 +21,33 @@ def evaluate_model(model, tokenizer, data):
 
 def example_input_output(model, tokenizer, data):
     print("\nExample Input/Output...\n")
+    pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_length=MAX_OUT_LENGTH)
     for i in range(NUM_EXAMPLES):
         prompt = promptify_single(data["article"][i])
         print("INPUT:")
         print(prompt)
+        result = pipe(prompt)
 
-        tok = tokenizer(prompt, padding=True, return_tensors='pt', max_length=MAX_SEQ_LENGTH, truncation=True)
-        model_out = model.generate(input_ids=tok['input_ids'].to(DEVICE),
-                                   attention_mask=tok['attention_mask'].to(DEVICE),
-                                   max_new_tokens=MAX_SEQ_LENGTH,
-                                   num_beams=5,
-                                   early_stopping=True)
-        new_tokens = model_out[0][tok['input_ids'].shape[-1]:]
-        output = tokenizer.decode(new_tokens, skip_special_tokens=True)
+        # tok = tokenizer(prompt, padding=True, return_tensors='pt', max_length=MAX_SEQ_LENGTH, truncation=True)
+        # model_out = model.generate(input_ids=tok['input_ids'].to(DEVICE),
+        #                            attention_mask=tok['attention_mask'].to(DEVICE),
+        #                            max_new_tokens=MAX_SEQ_LENGTH,
+        #                            num_beams=5,
+        #                            early_stopping=True)
+        # new_tokens = model_out[0][tok['input_ids'].shape[-1]:]
+        # output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         print("OUTPUT:")
-        print(output)
+        print(result[0]['generated_text'])
 
-    tok = tokenizer(prompt, padding=True, return_tensors='pt', max_length=MAX_SEQ_LENGTH, truncation=True)
-    model_out = model.generate(input_ids=tok['input_ids'].to(DEVICE),
-                                attention_mask=tok['attention_mask'].to(DEVICE),
-                                max_length=MAX_SEQ_LENGTH,
-                                num_beams=5,
-                                early_stopping=True)
-    output = tokenizer.decode(model_out[0], skip_special_tokens=True)
-    print("OUTPUT:")
-    print(output)
+    # tok = tokenizer(prompt, padding=True, return_tensors='pt', max_length=MAX_SEQ_LENGTH, truncation=True)
+    # model_out = model.generate(input_ids=tok['input_ids'].to(DEVICE),
+    #                             attention_mask=tok['attention_mask'].to(DEVICE),
+    #                             max_length=MAX_SEQ_LENGTH,
+    #                             num_beams=5,
+    #                             early_stopping=True)
+    # output = tokenizer.decode(model_out[0], skip_special_tokens=True)
+    # print("OUTPUT:")
+    # print(output)
 
 
 def rouge_test(model, tokenizer, data):
