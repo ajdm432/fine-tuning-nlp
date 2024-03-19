@@ -25,14 +25,14 @@ def example_input_output(model, tokenizer, data):
         print("INPUT:")
         print(prompt)
 
-        tok = tokenizer(prompt, padding=True, return_tensors='pt', max_length=MAX_SEQ_LENGTH, truncation=True)["input_ids"].to(DEVICE)
+        tok = tokenizer(prompt, padding=True, return_tensors='pt')["input_ids"].to(DEVICE)
         model_out = model.generate(tok,
                                    do_sample=True,
                                    temperature=0.7,
                                    top_p=0.95,
                                    top_k=40,
                                    max_new_tokens=MAX_OUT_LENGTH)
-        new_tokens = model_out[0]
+        new_tokens = model_out[0][tok.shape[1]:]
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         print("OUTPUT:")
         print(output)
