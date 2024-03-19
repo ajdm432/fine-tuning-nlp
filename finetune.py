@@ -34,7 +34,7 @@ def load_data():
         print("Loading Dataset...")
         data = load_dataset(DATASET, name=SUBSET)
         # save dataset
-        testdata.save_to_disk(DATA_PATH)
+        data.save_to_disk(DATA_PATH)
         # split up dataset
         train_data = data["train"]
         val_data = data["validation"]
