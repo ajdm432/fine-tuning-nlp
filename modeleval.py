@@ -12,7 +12,7 @@ DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 metric = evaluate.load(METRIC)
 
 def promptify_single(article, prompt=DEFAULT_PROMPT):
-    return f"<s>[INST]{prompt}\nArticle: {article}[\INST]"
+    return f"{DEFAULT_PROMPT}\nArticle: {article}"
 
 def evaluate_model(model, tokenizer, data):
     example_input_output(model, tokenizer, data)
@@ -20,10 +20,8 @@ def evaluate_model(model, tokenizer, data):
 
 def example_input_output(model, tokenizer, data):
     print("\nExample Input/Output...\n")
-    questions = ["Why is the sky blue?", "What website is best for shopping online?", "How do I do a backflip?"]
     for i in range(NUM_EXAMPLES):
-        # prompt = promptify_single(questions)
-        prompt = f"{questions[i]}"
+        prompt = promptify_single(data["article"][i])
         print("INPUT:")
         print(prompt)
 
