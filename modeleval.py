@@ -41,7 +41,7 @@ def rouge_test(model, tokenizer, data):
     print("\nTesting Model...\n")
     outputs = []
     targets = data["highlights"]
-    for model_in in tqdm(data["article"]):
+    for model_in in tqdm(data["article"][:10]):
         prompt = promptify_single(model_in)
         tok = tokenizer(prompt, padding=True, return_tensors='pt')["input_ids"].to(DEVICE)
         model_out = model.generate(tok,
