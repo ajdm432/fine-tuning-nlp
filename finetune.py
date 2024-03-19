@@ -60,7 +60,7 @@ def load_base_model_and_tokenizer():
             safetensors=True,
             fuse_layers=False,
         )
-        model.save_pretrained(BASE_MODEL_FILE, from_pt=True)
+        model.save_quantized(BASE_MODEL_FILE)
     else:
         model = AutoAWQForCausalLM.from_quantized(
             BASE_MODEL_FILE,
