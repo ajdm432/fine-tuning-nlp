@@ -20,8 +20,10 @@ def evaluate_model(model, tokenizer, data):
 
 def example_input_output(model, tokenizer, data):
     print("\nExample Input/Output...\n")
+    questions = ["Why is the sky blue?", "What website is best for shopping online?", "How do I do a backflip?"]
     for i in range(NUM_EXAMPLES):
-        prompt = promptify_single(data["article"][i])
+        # prompt = promptify_single(questions)
+        prompt = f"{questions[i]}"
         print("INPUT:")
         print(prompt)
 
