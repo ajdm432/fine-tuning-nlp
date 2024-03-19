@@ -25,7 +25,7 @@ def example_input_output(model, tokenizer, data):
         print("INPUT:")
         print(prompt)
 
-        tok = tokenizer(prompt, padding=True, return_tensors='pt', max_length=MAX_SEQ_LENGTH, truncation=True)["input_ids"]
+        tok = tokenizer(prompt, padding=True, return_tensors='pt', max_length=MAX_SEQ_LENGTH, truncation=True)["input_ids"].to(DEVICE)
         model_out = model.generate(tok,
                                    do_sample=True,
                                    temperature=0.7,
