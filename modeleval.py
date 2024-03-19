@@ -15,7 +15,7 @@ def promptify_single(article):
 
 def evaluate_model(model, tokenizer, data):
     example_input_output(model, tokenizer, data)
-    # rouge_test(model, tokenizer, data)
+    rouge_test(model, tokenizer, data)
 
 def example_input_output(model, tokenizer, data):
     print("\nExample Input/Output...\n")
@@ -43,10 +43,15 @@ def rouge_test(model, tokenizer, data):
     targets = data["highlights"]
     for model_in in tqdm(data["article"]):
         prompt = promptify_single(model_in)
-        tok = tokenizer.tokenize(prompt)
-        model_out = model(tok)
-        ids = tokenizer.convert_tokens_to_ids(model_out)
-        output = tokenizer.decode(ids, skip_special_tokens=True)
+        tok = tokenizer(prompt, padding=True, return_tensors='pt')["input_ids"].to(DEVICE)
+        model_out = model.generate(tok,
+                                   do_sample=True,
+                                   temperature=0.7,
+                                   top_p=0.95,
+                                   top_k=40,
+                                   max_new_tokens=MAX_OUT_LENGTH)
+        new_tokens = model_out[0, tok.shape[1]:]
+        output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         outputs.append(output)
 
     results = metric.compute(predictions=outputs, references=targets)
