@@ -16,7 +16,7 @@ from modeleval import evaluate_model
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # Set up training info
-BASE_MODEL = "mistralai/Mistral-7B-v0.1"
+BASE_MODEL = "TheBloke/Mistral-7B-v0.1-AWQ"
 
 # 3 splits, "train" (287k rows), "validation" (13.4k rows), and "test" (11.5k rows)
 DATASET = "cnn_dailymail"
@@ -54,18 +54,12 @@ def promptify_list(data):
     return output_text
 
 def load_base_model_and_tokenizer():
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnd_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
-    )
-    
     print(f"Loading Base Model {BASE_MODEL}...")
     if not os.path.isdir(BASE_MODEL_FILE):
         model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL,
             use_safetensors=True,
-            quantization_config=bnb_config,
+            load_in_4bit=True,
             trust_remote_code=True,
             device_map="auto",
         )
@@ -74,7 +68,7 @@ def load_base_model_and_tokenizer():
         model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL_FILE,
             use_safetensors=True,
-            quantization_config=bnb_config,
+            load_in_4bit=True,
             trust_remote_code=True,
             device_map="auto",
         )
@@ -87,16 +81,11 @@ def load_base_model_and_tokenizer():
     return model, tokenizer
 
 def load_trained_model_and_tokenizer():
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnd_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
-    )
     print(f"Loading Saved Model...")
     model = AutoModelForCausalLM.from_pretrained(
         TRAINED_MODEL_FILE,
         use_safetensors=True,
-        quantization_config=bnb_config,
+        load_in_4bit=True,
         trust_remote_code=True,
         device_map="auto",
     )
