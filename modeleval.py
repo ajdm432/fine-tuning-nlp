@@ -41,7 +41,7 @@ def rouge_test(model, tokenizer, data):
     print("\nTesting Model...\n")
     outputs = []
     targets = data["highlights"]
-    for model_in in tqdm(data["article"][:10]):
+    for model_in in tqdm(data["article"]):
         prompt = promptify_single(model_in)
         tok = tokenizer(prompt, padding=True, return_tensors='pt')["input_ids"].to(DEVICE)
         model_out = model.generate(tok,
@@ -54,9 +54,9 @@ def rouge_test(model, tokenizer, data):
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         outputs.append(output)
 
-    results = metric.compute(predictions=outputs, references=targets[:10])
+    results = metric.compute(predictions=outputs, references=targets)
     rouge1 = results['rouge1']
     rouge2 = results['rouge2']
     rougeL = results['rougeL']
     rougeLsum = results['rougeLsum']
-    print(f"Rouge test results:\nrouge1:{rouge1}\nrouge2:{rouge2}\nrougeL:{rougeL}\nrougeLSum{rougeLsum}")
+    print(f"Rouge test results:\nrouge1:{rouge1}\nrouge2:{rouge2}\nrougeL:{rougeL}\nrougeLSum:{rougeLsum}")
