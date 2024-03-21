@@ -65,6 +65,7 @@ def load_base_model_and_tokenizer():
             load_in_4bit=True,
         )
         model.save_pretrained(BASE_MODEL_FILE)
+        tokenizer.save_pretrained(BASE_MODEL_FILE)
     else:
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name=BASE_MODEL_FILE,
