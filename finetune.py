@@ -14,7 +14,7 @@ from modeleval import evaluate_model
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # Set up training info
-BASE_MODEL = "TheBloke/Mistral-7B-v0.1-GGUF/mistral-7b-v0.1.Q4_0.gguf"
+BASE_MODEL = ["TheBloke/Mistral-7B-v0.1-GGUF", "mistral-7b-v0.1.Q4_0.gguf", "mistral",]
 
 # 3 splits, "train" (287k rows), "validation" (13.4k rows), and "test" (11.5k rows)
 DATASET = "cnn_dailymail"
@@ -52,21 +52,21 @@ def promptify_list(data):
     return output_text
 
 def load_base_model_and_tokenizer():
-    print(f"Loading Base Model {BASE_MODEL}...")
+    print(f"Loading Base Model {BASE_MODEL[0]}...")
     if not os.path.isdir(BASE_MODEL_FILE):
         model = AutoModelForCausalLM.from_pretrained(
-            BASE_MODEL,
-            trust_remote_code=True,
+            BASE_MODEL[0],
+            model_file = BASE_MODEL[1],
+            model_type = BASE_MODEL[2],
         )
         model.save_pretrained(BASE_MODEL_FILE)
     else:
         model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL_FILE,
-            trust_remote_code=True,
         )
 
     print(f"Loading Tokenizer From Base Model...")
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_FILE)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
 
@@ -75,11 +75,10 @@ def load_base_model_and_tokenizer():
 def load_trained_model_and_tokenizer():
     print(f"Loading Saved Model...")
     model = AutoModelForCausalLM.from_pretrained(
-        BASE_MODEL_FILE,
-        trust_remote_code=True,
+        TRAINED_MODEL_FILE,
     )
     print(f"Loading Model Tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, trust_remote_code=True,)
+    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
     return model, tokenizer
@@ -127,7 +126,7 @@ def train(model, tokenizer, train_dataset, val_dataset):
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         peft_config=peft_config,
-        max_seq_length=2048,
+        max_seq_length=4096,
         tokenizer=tokenizer,
         args=training_arguments,
         formatting_func=promptify_list,
