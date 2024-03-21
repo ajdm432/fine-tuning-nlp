@@ -1,8 +1,9 @@
 import argparse, os
 import torch
 from datasets import load_dataset, load_from_disk
+from unsloth import FastLanguageModel
 from peft import LoraConfig
-from ctransformers import (
+from transformers import (
     AutoTokenizer,
     TrainingArguments,
     AutoModelForCausalLM,
@@ -14,7 +15,7 @@ from modeleval import evaluate_model
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # Set up training info
-BASE_MODEL = ["TheBloke/Mistral-7B-v0.1-GGUF", "mistral-7b-v0.1.Q4_0.gguf", "mistral",]
+BASE_MODEL = "unsloth/mistral-7b-bnb-4bit"
 
 # 3 splits, "train" (287k rows), "validation" (13.4k rows), and "test" (11.5k rows)
 DATASET = "cnn_dailymail"
@@ -26,6 +27,8 @@ OUTPUT_DIR = "output"
 DEFAULT_PROMPT = "Below is an article. Write a summary of the article.".strip()
 
 DATA_PATH = "data/cnn_dailymail"
+
+MAX_SEQ_LENGTH = 4096
 
 def load_data():
     if not os.path.isdir(DATA_PATH):
@@ -54,19 +57,22 @@ def promptify_list(data):
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL[0]}...")
     if not os.path.isdir(BASE_MODEL_FILE):
-        model = AutoModelForCausalLM.from_pretrained(
-            BASE_MODEL[0],
-            model_file = BASE_MODEL[1],
-            model_type = BASE_MODEL[2],
+        model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name=BASE_MODEL,
+            max_seq_length=MAX_SEQ_LENGTH,
+            dtype=None,
+            load_in_4bit=True,
         )
         model.save_pretrained(BASE_MODEL_FILE)
     else:
-        model = AutoModelForCausalLM.from_pretrained(
-            BASE_MODEL_FILE,
+        model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name=BASE_MODEL_FILE,
+            max_seq_length=MAX_SEQ_LENGTH,
+            dtype=None,
+            load_in_4bit=True,
         )
 
     print(f"Loading Tokenizer From Base Model...")
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_FILE)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
 
@@ -84,16 +90,25 @@ def load_trained_model_and_tokenizer():
     return model, tokenizer
 
 def train(model, tokenizer, train_dataset, val_dataset):
+    # format dataset
+    train_dataset = train_dataset.map(promptify_list, batched=True)
+    val_dataset = val_dataset.map(promptify_list, batched=True)
+
     # peft params
     lora_alpha = 32
-    lora_dropout = 0.05
-    lora_r = 16
-    peft_config = LoraConfig(
-        lora_alpha=lora_alpha,
-        lora_dropout=lora_dropout,
+    lora_r = 32
+    
+    model = FastLanguageModel.get_peft_model(
+        model,
         r=lora_r,
-        bias="none",
-        task_type="CAUSAL_LM",
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
+                      "gate_proj", "up_proj", "down_proj",],
+        lora_alpha=lora_alpha,
+        lora_dropout=0,
+        use_gradient_checkpointing=False,
+        random_state=43,
+        use_rslora=False,
+        loftq_config=None
     )
 
     # train params
@@ -101,20 +116,22 @@ def train(model, tokenizer, train_dataset, val_dataset):
         per_device_train_batch_size=4,
         gradient_accumulation_steps=4,
         optim="paged_adamw_32bit",
+        warmup_ratio=0.1,
         logging_steps=1,
         learning_rate=1e-4,
-        fp16=True,
+        fp16=not torch.cuda.is_bf16_supported(),
+        bf16=torch.cuda.is_bf16_supported(),
         max_grad_norm=0.3,
-        num_train_epochs=20,
+        num_train_epochs=3,
         evaluation_strategy="epoch",
         eval_steps=0.2,
-        warmup_ratio=0.05,
+        weight_decay=0.1,
         save_strategy="epoch",
         group_by_length=True,
         output_dir=OUTPUT_DIR,
         save_safetensors=True,
         lr_scheduler_type="cosine",
-        seed=42,
+        seed=43,
         load_best_model_at_end=True,
         push_to_hub=False,
     )
@@ -125,11 +142,10 @@ def train(model, tokenizer, train_dataset, val_dataset):
         model=model,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
-        peft_config=peft_config,
-        max_seq_length=4096,
+        max_seq_length=MAX_SEQ_LENGTH,
         tokenizer=tokenizer,
         args=training_arguments,
-        formatting_func=promptify_list,
+        packing=True
     )
 
     # begin training
@@ -157,4 +173,5 @@ if __name__=='__main__':
             model, tokenizer = load_base_model_and_tokenizer()
         else:
             model, tokenizer = load_trained_model_and_tokenizer()
+    model = FastLanguageModel.for_inference(model)
     evaluate_model(model, tokenizer, testdata)
