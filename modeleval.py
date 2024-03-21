@@ -30,7 +30,8 @@ def example_input_output(model, tokenizer, data):
                                    temperature=0.7,
                                    top_p=0.95,
                                    top_k=40,
-                                   max_new_tokens=MAX_OUT_LENGTH)
+                                   max_new_tokens=MAX_OUT_LENGTH,
+                                   pad_token_id=tokenizer.eos_token_id)
         new_tokens = model_out[0, tok_len:]
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         print("OUTPUT:")
@@ -50,7 +51,8 @@ def rouge_test(model, tokenizer, data):
                                    temperature=0.7,
                                    top_p=0.95,
                                    top_k=40,
-                                   max_new_tokens=MAX_OUT_LENGTH)
+                                   max_new_tokens=MAX_OUT_LENGTH,
+                                   pad_token_id=tokenizer.eos_token_id)
         new_tokens = model_out[0, tok_len:]
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         outputs.append(output)
