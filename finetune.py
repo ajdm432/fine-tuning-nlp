@@ -5,8 +5,8 @@ from peft import LoraConfig
 from transformers import (
     AutoTokenizer,
     TrainingArguments,
+    AutoModelForCausalLM,
 )
-from awq import AutoAWQForCausalLM
 from trl import SFTTrainer
 from modeleval import evaluate_model
 
@@ -14,7 +14,7 @@ from modeleval import evaluate_model
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # Set up training info
-BASE_MODEL = "TheBloke/Mistral-7B-v0.1-AWQ"
+BASE_MODEL = "TheBloke/Mistral-7B-v0.1-GGUF/mistral-7b-v0.1.Q4_0.gguf"
 
 # 3 splits, "train" (287k rows), "validation" (13.4k rows), and "test" (11.5k rows)
 DATASET = "cnn_dailymail"
@@ -54,19 +54,15 @@ def promptify_list(data):
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL}...")
     if not os.path.isdir(BASE_MODEL_FILE):
-        model = AutoAWQForCausalLM.from_quantized(
+        model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL,
             trust_remote_code=True,
-            safetensors=True,
-            fuse_layers=False,
         )
-        model.save_quantized(BASE_MODEL_FILE)
+        model.save_pretrained(BASE_MODEL_FILE)
     else:
-        model = AutoAWQForCausalLM.from_quantized(
+        model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL_FILE,
             trust_remote_code=True,
-            safetensors=True,
-            fuse_layers=False,
         )
 
     print(f"Loading Tokenizer From Base Model...")
@@ -78,11 +74,9 @@ def load_base_model_and_tokenizer():
 
 def load_trained_model_and_tokenizer():
     print(f"Loading Saved Model...")
-    model = AutoAWQForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL_FILE,
         trust_remote_code=True,
-        safetensors=True,
-        fuse_layers=False,
     )
     print(f"Loading Model Tokenizer...")
     tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, trust_remote_code=True,)

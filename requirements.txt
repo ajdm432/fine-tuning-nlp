@@ -6,4 +6,3 @@ trl
 nltk
 rouge_score
 evaluate
-AutoAWQ
