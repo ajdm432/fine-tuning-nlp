@@ -76,6 +76,7 @@ def load_base_model_and_tokenizer():
 
     print(f"Loading Tokenizer From Base Model...")
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
     tokenizer.padding_side = "right"
 
     return model, tokenizer
@@ -88,6 +89,7 @@ def load_trained_model_and_tokenizer():
     print(f"Loading Model Tokenizer...")
     tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE)
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
     tokenizer.padding_side = "right"
     return model, tokenizer
 

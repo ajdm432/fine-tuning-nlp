@@ -23,15 +23,15 @@ def example_input_output(model, tokenizer, data):
         prompt = promptify_single(data["article"][i])
         print("INPUT:")
         print(prompt)
-
-        tok = tokenizer(prompt, padding=True, return_tensors='pt')["input_ids"].to(DEVICE)
-        model_out = model.generate(tok,
+        tokens = tokenizer(prompt, padding=True, truncation=True, return_tensors='pt')
+        tok_len = tokens["input_ids"].shape(1)
+        model_out = model.generate(**tokens,
                                    do_sample=True,
                                    temperature=0.7,
                                    top_p=0.95,
                                    top_k=40,
                                    max_new_tokens=MAX_OUT_LENGTH)
-        new_tokens = model_out[0, tok.shape[1]:]
+        new_tokens = model_out[0, tok_len:]
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         print("OUTPUT:")
         print(output)
@@ -43,14 +43,15 @@ def rouge_test(model, tokenizer, data):
     targets = data["highlights"]
     for model_in in tqdm(data["article"]):
         prompt = promptify_single(model_in)
-        tok = tokenizer(prompt, padding=True, return_tensors='pt')["input_ids"].to(DEVICE)
-        model_out = model.generate(tok,
+        tokens = tokenizer(prompt, padding=True, truncation=True, return_tensors='pt')
+        tok_len = tokens["input_ids"].shape(1)
+        model_out = model.generate(**tokens,
                                    do_sample=True,
                                    temperature=0.7,
                                    top_p=0.95,
                                    top_k=40,
                                    max_new_tokens=MAX_OUT_LENGTH)
-        new_tokens = model_out[0, tok.shape[1]:]
+        new_tokens = model_out[0, tok_len:]
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         outputs.append(output)
 
