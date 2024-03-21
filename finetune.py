@@ -1,4 +1,5 @@
 import argparse, os
+os.environ['HF_HOME'] = '.'
 import torch
 from datasets import load_dataset, load_from_disk
 from unsloth import FastLanguageModel
