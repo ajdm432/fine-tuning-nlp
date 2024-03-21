@@ -2,7 +2,7 @@ import argparse, os
 import torch
 from datasets import load_dataset, load_from_disk
 from peft import LoraConfig
-from transformers import (
+from ctransformers import (
     AutoTokenizer,
     TrainingArguments,
     AutoModelForCausalLM,
