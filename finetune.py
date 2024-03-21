@@ -175,5 +175,5 @@ if __name__=='__main__':
             model, tokenizer = load_base_model_and_tokenizer()
         else:
             model, tokenizer = load_trained_model_and_tokenizer()
-    model = FastLanguageModel.for_inference(model)
+    FastLanguageModel.for_inference(model)
     evaluate_model(model, tokenizer, testdata)
