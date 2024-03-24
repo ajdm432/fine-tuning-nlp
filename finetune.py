@@ -82,7 +82,7 @@ def load_base_model_and_tokenizer():
         tokenizer.pad_token = "<pad>"
         print(tokenizer.pad_token)
         print(tokenizer.pad_token_id)
-        tokenizer.pad_token_id = -100
+        tokenizer.pad_token_id = int(-100)
         print(type(tokenizer.pad_token_id))
         tokenizer.padding_side = "right"
     return model, tokenizer
