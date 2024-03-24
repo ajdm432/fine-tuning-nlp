@@ -50,12 +50,12 @@ def load_data():
         test_data = data["test"]
     return train_data, val_data, test_data
 
-def promptify_list(data):
-    output_text = []
-    for i in range(len(data["article"])):
-        text = f"### Instruction: {DEFAULT_PROMPT} \n### Article: {data['article'][i]} \n### Summary: {data['highlights'][i]}"
-        output_text.append(text)
-    return output_text
+def promptify_data(example):
+    out_dict = {
+        "input_ids": f"Article: {example['article']}\nSummary:",
+        "labels": example["highlights"],
+    }
+    return out_dict
 
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL[0]}...")
@@ -100,8 +100,8 @@ def load_trained_model_and_tokenizer():
 
 def train(model, tokenizer, train_dataset, val_dataset):
     # format dataset
-    train_dataset = train_dataset.map(promptify_list, batched=True)
-    val_dataset = val_dataset.map(promptify_list, batched=True)
+    train_dataset = train_dataset.map(promptify_data, batched=True)
+    val_dataset = val_dataset.map(promptify_data, batched=True)
 
     # peft params
     lora_alpha = 32
