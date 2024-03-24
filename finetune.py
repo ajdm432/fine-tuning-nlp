@@ -56,9 +56,7 @@ def promptify_data(examples):
     # labels = tokenizer(examples["highlights"], max_length=MAX_SEQ_LENGTH, truncation=True)
     # model_inputs["labels"] = labels["input_ids"]
     # return model_inputs
-    inputs = [f"Article: {article}\nSummary:" for article in examples["article"]]
-    labels = examples["highlights"]
-    return inputs, labels
+    return [f"Article: {article}\nSummary:" for article in examples["article"]]
 
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL[0]}...")
@@ -82,23 +80,26 @@ def load_base_model_and_tokenizer():
         )
 
     print(f"Loading Tokenizer From Base Model...")
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.pad_token_id = tokenizer.eos_token_id
-    tokenizer.padding_side = "right"
+    # tokenizer.pad_token = tokenizer.eos_token
+    # tokenizer.pad_token_id = tokenizer.eos_token_id
+    # tokenizer.padding_side = "right"
 
     return model, tokenizer
 
 def load_trained_model_and_tokenizer():
     print(f"Loading Saved Model...")
-    model = AutoModelForCausalLM.from_pretrained(
+    model, tokenizer = FastLanguageModel.from_pretrained(
         TRAINED_MODEL_FILE,
+        max_seq_length=MAX_SEQ_LENGTH,
+        dtype=None,
+        load_in_4bit=True,
         cache_dir=None,
     )
-    print(f"Loading Model Tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, cach_dir=None)
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.pad_token_id = tokenizer.eos_token_id
-    tokenizer.padding_side = "right"
+    # print(f"Loading Model Tokenizer...")
+    # tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, cach_dir=None)
+    # tokenizer.pad_token = tokenizer.eos_token
+    # tokenizer.pad_token_id = tokenizer.eos_token_id
+    # tokenizer.padding_side = "right"
     return model, tokenizer
 
 def train(model, tokenizer, train_dataset, val_dataset):
@@ -167,6 +168,8 @@ def train(model, tokenizer, train_dataset, val_dataset):
     trainer.train()
     print(f"Beginning Model Evaluation...")
     trainer.evaluate()
+    # save tokenizer at same location as model for unsloth
+    tokenizer.save_pretrained(TRAINED_MODEL_FILE, cache_dir=None)
 
 if __name__=='__main__':
     # define argument options
