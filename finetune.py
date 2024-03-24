@@ -50,10 +50,15 @@ def load_data():
         test_data = data["test"]
     return train_data, val_data, test_data
 
-def promptify_data(example):
+def promptify_data(data):
+    inputs = []
+    outputs = []
+    for example in data:
+        inputs.append(f"Article: {example['article']}\nSummary:")
+        outputs.append(f"{example['highlights']}")
     out_dict = {
-        "input_ids": f"Article: {example['article']}\nSummary:",
-        "labels": example["highlights"],
+        "input_ids": inputs,
+        "labels": outputs,
     }
     return out_dict
 
