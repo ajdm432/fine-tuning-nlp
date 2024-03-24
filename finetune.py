@@ -145,7 +145,6 @@ def train(model, tokenizer, train_dataset, val_dataset):
         model=model,
         train_dataset=train_dataset,
         max_seq_length=MAX_SEQ_LENGTH,
-        tokenizer=tokenizer,
         args=training_arguments,
         packing=False,
         formatting_func=promptify_data,
