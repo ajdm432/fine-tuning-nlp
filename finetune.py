@@ -51,11 +51,9 @@ def load_data():
     return train_data, val_data, test_data
 
 def promptify_data(examples, tokenizer):
-    print(type(examples["article"]))
     inputs = [f"Article: {article}\nSummary:" for article in examples["article"]]
-    print(type(inputs))
-    model_inputs = tokenizer.encode(inputs, max_length=MAX_SEQ_LENGTH, truncation=True)
-    labels = tokenizer.encode(text_target=examples["highlights"], max_length=MAX_SEQ_LENGTH/2, truncation=True)
+    model_inputs = tokenizer(inputs, max_length=MAX_SEQ_LENGTH, truncation=True)
+    labels = tokenizer(examples["highlights"], max_length=MAX_SEQ_LENGTH/2, truncation=True)
     model_inputs["labels"] = labels["input_ids"]
     return model_inputs
 
