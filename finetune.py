@@ -1,7 +1,6 @@
 import argparse, os
-os.environ['HF_HOME'] = '.'
 import torch
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, disable_caching
 from unsloth import FastLanguageModel
 from peft import LoraConfig
 from transformers import (
@@ -11,6 +10,9 @@ from transformers import (
 )
 from trl import SFTTrainer
 from modeleval import evaluate_model
+
+os.environ['HF_HOME'] = '.'
+disable_caching()
 
 # get preferred device
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -63,15 +65,17 @@ def load_base_model_and_tokenizer():
             max_seq_length=MAX_SEQ_LENGTH,
             dtype=None,
             load_in_4bit=True,
+            cache_dir=None,
         )
-        model.save_pretrained(BASE_MODEL_FILE)
-        tokenizer.save_pretrained(BASE_MODEL_FILE)
+        model.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
+        tokenizer.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
     else:
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name=BASE_MODEL_FILE,
             max_seq_length=MAX_SEQ_LENGTH,
             dtype=None,
             load_in_4bit=True,
+            cache_dir=None,
         )
 
     print(f"Loading Tokenizer From Base Model...")
@@ -85,9 +89,10 @@ def load_trained_model_and_tokenizer():
     print(f"Loading Saved Model...")
     model = AutoModelForCausalLM.from_pretrained(
         TRAINED_MODEL_FILE,
+        cache_dir=None,
     )
     print(f"Loading Model Tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE)
+    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, cach_dir=None)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.pad_token_id = tokenizer.eos_token_id
     tokenizer.padding_side = "right"
@@ -149,7 +154,7 @@ def train(model, tokenizer, train_dataset, val_dataset):
         max_seq_length=MAX_SEQ_LENGTH,
         tokenizer=tokenizer,
         args=training_arguments,
-        packing=True
+        packing=True,
     )
 
     # begin training
