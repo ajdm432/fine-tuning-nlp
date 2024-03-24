@@ -50,12 +50,17 @@ def load_data():
         test_data = data["test"]
     return train_data, val_data, test_data
 
-def promptify_data(examples, tokenizer):
-    inputs = [f"Article: {article}\nSummary:" for article in examples["article"]]
-    model_inputs = tokenizer(inputs, max_length=MAX_SEQ_LENGTH, truncation=True)
-    labels = tokenizer(examples["highlights"], max_length=MAX_SEQ_LENGTH, truncation=True)
-    model_inputs["labels"] = labels["input_ids"]
-    return model_inputs
+def promptify_data(examples):
+    # inputs = [f"Article: {article}\nSummary:" for article in examples["article"]]
+    # model_inputs = tokenizer(inputs, max_length=MAX_SEQ_LENGTH, truncation=True)
+    # labels = tokenizer(examples["highlights"], max_length=MAX_SEQ_LENGTH, truncation=True)
+    # model_inputs["labels"] = labels["input_ids"]
+    # return model_inputs
+    output_texts = []
+    for article in examples["article"]:
+        text = f"Article: {article}\nSummary:"
+        output_texts.append(text)
+    return output_texts
 
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL[0]}...")
@@ -100,8 +105,8 @@ def load_trained_model_and_tokenizer():
 
 def train(model, tokenizer, train_dataset, val_dataset):
     # format dataset
-    train_dataset = train_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
-    val_dataset = val_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
+    # train_dataset = train_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
+    # val_dataset = val_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
 
     # peft params
     lora_alpha = 32
@@ -155,6 +160,8 @@ def train(model, tokenizer, train_dataset, val_dataset):
         tokenizer=tokenizer,
         args=training_arguments,
         packing=True,
+        dataset_text_field="article",
+        formatting_func=promptify_data
     )
 
     # begin training
