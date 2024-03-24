@@ -68,7 +68,6 @@ def load_base_model_and_tokenizer():
         model.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
         tokenizer.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
         tokenizer.pad_token = "<pad>"
-        tokenizer.pad_token_id = -100
         tokenizer.padding_side = "right"
     else:
         model, tokenizer = FastLanguageModel.from_pretrained(
@@ -78,12 +77,7 @@ def load_base_model_and_tokenizer():
             load_in_4bit=True,
             cache_dir=None,
         )
-        print(tokenizer.pad_token)
         tokenizer.pad_token = "<pad>"
-        print(tokenizer.pad_token)
-        print(tokenizer.pad_token_id)
-        tokenizer.pad_token_id = int(-100)
-        print(type(tokenizer.pad_token_id))
         tokenizer.padding_side = "right"
     return model, tokenizer
 
@@ -146,7 +140,7 @@ def train(model, tokenizer, train_dataset, val_dataset):
     )
 
     response_template = "### Summary:"
-    collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer)
+    collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer, mlm=False)
 
     print(f"Creating Trainer...")
     # create trainer object
