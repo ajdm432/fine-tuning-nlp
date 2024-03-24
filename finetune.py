@@ -111,6 +111,9 @@ def train(model, tokenizer, train_dataset, val_dataset):
     # peft params
     lora_alpha = 32
     lora_r = 32
+
+    print(len(train_dataset["article"]))
+    print(len(val_dataset["article"]))
     
     model = FastLanguageModel.get_peft_model(
         model,
