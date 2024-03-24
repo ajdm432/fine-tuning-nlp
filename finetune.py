@@ -2,13 +2,10 @@ import argparse, os
 import torch
 from datasets import load_dataset, load_from_disk, disable_caching
 from unsloth import FastLanguageModel
-from peft import LoraConfig
 from transformers import (
-    AutoTokenizer,
     TrainingArguments,
-    AutoModelForCausalLM,
 )
-from trl import SFTTrainer
+from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 from modeleval import evaluate_model
 
 os.environ['HF_HOME'] = '.'
@@ -56,7 +53,7 @@ def promptify_data(examples):
     # labels = tokenizer(examples["highlights"], max_length=MAX_SEQ_LENGTH, truncation=True)
     # model_inputs["labels"] = labels["input_ids"]
     # return model_inputs
-    return [f"Article: {article}\nSummary:" for article in examples["article"]]
+    return [f"Article: {examples['article'][i]}\nSummary: {examples['highlights'][i]}" for i in range(len(examples["article"]))]
 
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL[0]}...")
@@ -80,9 +77,9 @@ def load_base_model_and_tokenizer():
         )
 
     print(f"Loading Tokenizer From Base Model...")
-    # tokenizer.pad_token = tokenizer.eos_token
-    # tokenizer.pad_token_id = tokenizer.eos_token_id
-    # tokenizer.padding_side = "right"
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+    tokenizer.padding_side = "right"
 
     return model, tokenizer
 
@@ -97,9 +94,9 @@ def load_trained_model_and_tokenizer():
     )
     # print(f"Loading Model Tokenizer...")
     # tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, cach_dir=None)
-    # tokenizer.pad_token = tokenizer.eos_token
-    # tokenizer.pad_token_id = tokenizer.eos_token_id
-    # tokenizer.padding_side = "right"
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+    tokenizer.padding_side = "right"
     return model, tokenizer
 
 def train(model, tokenizer, train_dataset, val_dataset):
@@ -149,18 +146,21 @@ def train(model, tokenizer, train_dataset, val_dataset):
         push_to_hub=False,
     )
 
+    response_template = "Summary:"
+    collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer)
+
     print(f"Creating Trainer...")
     # create trainer object
     trainer = SFTTrainer(
         model=model,
         train_dataset=train_dataset,
-        eval_dataset=val_dataset,
         max_seq_length=MAX_SEQ_LENGTH,
         tokenizer=tokenizer,
         args=training_arguments,
-        packing=True,
+        packing=False,
         dataset_text_field="article",
-        formatting_func=promptify_data
+        formatting_func=promptify_data,
+        data_collator=collator,
     )
 
     # begin training
