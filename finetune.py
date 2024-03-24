@@ -67,6 +67,9 @@ def load_base_model_and_tokenizer():
         )
         model.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
         tokenizer.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
+        tokenizer.pad_token = "<pad>"
+        tokenizer.pad_token_id = -100
+        tokenizer.padding_side = "right"
     else:
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name=BASE_MODEL_FILE,
@@ -75,7 +78,9 @@ def load_base_model_and_tokenizer():
             load_in_4bit=True,
             cache_dir=None,
         )
-
+        tokenizer.pad_token = "<pad>"
+        tokenizer.pad_token_id = -100
+        tokenizer.padding_side = "right"
     return model, tokenizer
 
 def load_trained_model_and_tokenizer():
