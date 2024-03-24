@@ -50,14 +50,12 @@ def load_data():
         test_data = data["test"]
     return train_data, val_data, test_data
 
-def promptify_data(example, tokenizer):
-    input_ids = tokenizer.encode(f"Article: {example['article']}\nSummary:", add_special_tokens=True)
-    labels = tokenizer.encode(example["highlights"], add_special_tokens=True)
-    out_dict = {
-        "input_ids": input_ids,
-        "labels": labels,
-    }
-    return out_dict
+def promptify_data(examples, tokenizer):
+    inputs = [f"Article: {article}\nSummary:" for article in examples["article"]]
+    model_inputs = tokenizer.encode(inputs, max_length=MAX_SEQ_LENGTH, truncation=True)
+    labels = tokenizer.encode(text_target=examples["highlights"], max_length=MAX_SEQ_LENGTH/2, truncation=True)
+    model_inputs["labels"] = labels["input_ids"]
+    return model_inputs
 
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL[0]}...")
