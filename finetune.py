@@ -50,15 +50,12 @@ def load_data():
         test_data = data["test"]
     return train_data, val_data, test_data
 
-def promptify_data(data):
-    inputs = []
-    outputs = []
-    for example in data:
-        inputs.append(f"Article: {example['article']}\nSummary:")
-        outputs.append(f"{example['highlights']}")
+def promptify_data(example, tokenizer):
+    input_ids = tokenizer.encode(f"Article: {example['article']}\nSummary:", add_special_tokens=True)
+    labels = tokenizer.encode(example["highlights"], add_special_tokens=True)
     out_dict = {
-        "input_ids": inputs,
-        "labels": outputs,
+        "input_ids": input_ids,
+        "labels": labels,
     }
     return out_dict
 
@@ -105,8 +102,8 @@ def load_trained_model_and_tokenizer():
 
 def train(model, tokenizer, train_dataset, val_dataset):
     # format dataset
-    train_dataset = train_dataset.map(promptify_data, batched=True)
-    val_dataset = val_dataset.map(promptify_data, batched=True)
+    train_dataset = train_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
+    val_dataset = val_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
 
     # peft params
     lora_alpha = 32
