@@ -53,7 +53,7 @@ def load_data():
 def promptify_data(examples, tokenizer):
     inputs = [f"Article: {article}\nSummary:" for article in examples["article"]]
     model_inputs = tokenizer(inputs, max_length=MAX_SEQ_LENGTH, truncation=True)
-    labels = tokenizer(examples["highlights"], max_length=MAX_SEQ_LENGTH/2, truncation=True)
+    labels = tokenizer(examples["highlights"], max_length=MAX_SEQ_LENGTH, truncation=True)
     model_inputs["labels"] = labels["input_ids"]
     return model_inputs
 
