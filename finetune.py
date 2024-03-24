@@ -78,9 +78,12 @@ def load_base_model_and_tokenizer():
             load_in_4bit=True,
             cache_dir=None,
         )
+        print(tokenizer.pad_token)
         tokenizer.pad_token = "<pad>"
-        print(type(tokenizer.pad_token_id))
+        print(tokenizer.pad_token)
+        print(tokenizer.pad_token_id)
         tokenizer.pad_token_id = -100
+        print(type(tokenizer.pad_token_id))
         tokenizer.padding_side = "right"
     return model, tokenizer
 
