@@ -92,6 +92,11 @@ def load_trained_model_and_tokenizer():
     )
     return model, tokenizer
 
+def print_tokens_with_ids(txt):
+    tokens = tokenizer.tokenize(txt, add_special_tokens=False)
+    token_ids = tokenizer.encode(txt, add_special_tokens=False)
+    print(list(zip(tokens, token_ids)))
+
 def train(model, tokenizer, train_dataset, val_dataset):
     # format dataset
     # train_dataset = train_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
@@ -139,7 +144,11 @@ def train(model, tokenizer, train_dataset, val_dataset):
         push_to_hub=False,
     )
 
+    prompt = "### Article: blah blah blah \n### Summary: output"
+    print_tokens_with_ids(prompt)
+
     response_template = "### Summary:"
+    print_tokens_with_ids(response_template)
     collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer, mlm=False)
 
     print(f"Creating Trainer...")
