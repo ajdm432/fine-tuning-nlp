@@ -28,7 +28,7 @@ DEFAULT_PROMPT = "Below is an article. Write a summary of the article.".strip()
 
 DATA_PATH = "data/cnn_dailymail"
 
-MAX_SEQ_LENGTH = 4096
+MAX_SEQ_LENGTH = 2048
 
 def load_data():
     if not os.path.isdir(DATA_PATH):
@@ -92,11 +92,6 @@ def load_trained_model_and_tokenizer():
     )
     return model, tokenizer
 
-def print_tokens_with_ids(txt):
-    tokens = tokenizer.tokenize(txt, add_special_tokens=False)
-    token_ids = tokenizer.encode(txt, add_special_tokens=False)
-    print(list(zip(tokens, token_ids)))
-
 def train(model, tokenizer, train_dataset, val_dataset):
     # format dataset
     # train_dataset = train_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
@@ -121,8 +116,8 @@ def train(model, tokenizer, train_dataset, val_dataset):
 
     # train params
     training_arguments = TrainingArguments(
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=2,
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=1,
         optim="paged_adamw_32bit",
         warmup_ratio=0.1,
         logging_steps=1,
@@ -143,8 +138,6 @@ def train(model, tokenizer, train_dataset, val_dataset):
         load_best_model_at_end=True,
         push_to_hub=False,
     )
-
-    prompt = "### Article: blah blah blah \n### Summary: output"
 
     context_response_template = "\n### Summary:"
     response_template_ids = tokenizer.encode(context_response_template, add_special_tokens=False)[2:]
