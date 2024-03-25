@@ -147,9 +147,10 @@ def train(model, tokenizer, train_dataset, val_dataset):
     prompt = "### Article: blah blah blah \n### Summary: output"
     print_tokens_with_ids(prompt)
 
-    response_template = "### Summary:"
-    print_tokens_with_ids(response_template)
-    collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer, mlm=False)
+    context_response_template = "\n### Summary:"
+    response_template_ids = tokenizer.encode(context_response_template, add_special_tokens=False)[2:]
+    print(response_template_ids)
+    collator = DataCollatorForCompletionOnlyLM(response_template_ids, tokenizer=tokenizer, mlm=False)
 
     print(f"Creating Trainer...")
     # create trainer object
