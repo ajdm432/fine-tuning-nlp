@@ -145,7 +145,6 @@ def train(model, tokenizer, train_dataset, val_dataset):
     )
 
     prompt = "### Article: blah blah blah \n### Summary: output"
-    print_tokens_with_ids(prompt)
 
     context_response_template = "\n### Summary:"
     response_template_ids = tokenizer.encode(context_response_template, add_special_tokens=False)[2:]
