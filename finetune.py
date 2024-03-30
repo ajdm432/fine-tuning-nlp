@@ -56,7 +56,7 @@ def promptify_data(examples):
     return [f"### Article: {examples['article'][i]}\n### Summary: {examples['highlights'][i]}" for i in range(len(examples["article"]))]
 
 def load_base_model_and_tokenizer():
-    print(f"Loading Base Model {BASE_MODEL[0]}...")
+    print(f"Loading Base Model {BASE_MODEL}...")
     if not os.path.isdir(BASE_MODEL_FILE):
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name=BASE_MODEL,
