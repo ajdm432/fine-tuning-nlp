@@ -126,7 +126,7 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         bf16=torch.cuda.is_bf16_supported(),
         num_train_epochs=1,
         evaluation_strategy="steps",
-        eval_steps=5,
+        eval_steps=100,
         do_eval=True,
         save_strategy="steps",
         save_steps=50,
