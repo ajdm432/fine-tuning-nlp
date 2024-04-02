@@ -159,6 +159,7 @@ def train(model, tokenizer, train_dataset, val_dataset):
     print(f"Beginning Model Evaluation...")
     trainer.evaluate()
     # save tokenizer at same location as model for unsloth
+    model.save_pretrained(TRAINED_MODEL_FILE, cache_dir=None)
     tokenizer.save_pretrained(TRAINED_MODEL_FILE, cache_dir=None)
 
 if __name__=='__main__':
