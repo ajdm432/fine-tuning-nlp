@@ -67,7 +67,8 @@ def load_base_model_and_tokenizer():
         )
         model.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
         tokenizer.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
-        tokenizer.pad_token = "<pad>"
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
         tokenizer.padding_side = "right"
     else:
         model, tokenizer = FastLanguageModel.from_pretrained(
@@ -77,7 +78,8 @@ def load_base_model_and_tokenizer():
             load_in_4bit=True,
             cache_dir=None,
         )
-        tokenizer.pad_token = "<pad>"
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
         tokenizer.padding_side = "right"
     return model, tokenizer
 
@@ -115,14 +117,14 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
 
     # train params
     training_arguments = TrainingArguments(
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=4,
+        per_device_train_batch_size=32,
+        gradient_accumulation_steps=3,
         optim="paged_adamw_32bit",
         warmup_steps=100,
         learning_rate=1e-4,
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
-        num_train_epochs=2,
+        num_train_epochs=1,
         evaluation_strategy="steps",
         eval_steps=100,
         do_eval=True,
@@ -134,6 +136,7 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         seed=43,
         push_to_hub=False,
         save_total_limit=1,
+        max_steps=3000,
     )
 
     context_response_template = "\n### Summary:"
