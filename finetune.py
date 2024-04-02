@@ -135,7 +135,7 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         lr_scheduler_type="linear",
         seed=43,
         push_to_hub=False,
-        save_total_limit=1,
+        save_total_limit=3,
         max_steps=3000,
     )
 
