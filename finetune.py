@@ -98,8 +98,8 @@ def train(model, tokenizer, train_dataset, val_dataset):
     # val_dataset = val_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
 
     # peft params
-    lora_alpha = 32
-    lora_r = 32
+    lora_alpha = 16
+    lora_r = 16
     
     model = FastLanguageModel.get_peft_model(
         model,
@@ -108,7 +108,6 @@ def train(model, tokenizer, train_dataset, val_dataset):
                       "gate_proj", "up_proj", "down_proj",],
         lora_alpha=lora_alpha,
         lora_dropout=0,
-        use_gradient_checkpointing=False,
         random_state=43,
         use_rslora=False,
         loftq_config=None
@@ -116,8 +115,8 @@ def train(model, tokenizer, train_dataset, val_dataset):
 
     # train params
     training_arguments = TrainingArguments(
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=1,
+        per_device_train_batch_size=2,
+        gradient_accumulation_steps=4,
         optim="paged_adamw_32bit",
         warmup_steps=100,
         learning_rate=1e-4,
@@ -134,6 +133,7 @@ def train(model, tokenizer, train_dataset, val_dataset):
         lr_scheduler_type="linear",
         seed=43,
         push_to_hub=False,
+        save_total_limit=1,
     )
 
     context_response_template = "\n### Summary:"
