@@ -116,11 +116,11 @@ def train(model, tokenizer, train_dataset, val_dataset):
 
     # train params
     training_arguments = TrainingArguments(
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=1,
+        per_device_train_batch_size=2,
+        gradient_accumulation_steps=4,
         optim="paged_adamw_32bit",
         warmup_ratio=0.1,
-        logging_steps=1,
+        logging_steps=500,
         learning_rate=1e-4,
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
