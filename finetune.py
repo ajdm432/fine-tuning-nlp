@@ -28,7 +28,7 @@ DEFAULT_PROMPT = "Below is an article. Write a summary of the article.".strip()
 
 DATA_PATH = "data/cnn_dailymail"
 
-MAX_SEQ_LENGTH = 2048
+MAX_SEQ_LENGTH = 4096
 
 def load_data():
     if not os.path.isdir(DATA_PATH):

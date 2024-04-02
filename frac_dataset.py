@@ -1,5 +1,4 @@
 from datasets import load_dataset
-import random
 import argparse
 
 def save_fraction_dataset(dataset_name, fraction, save_name, subset=None):
