@@ -135,7 +135,6 @@ def train(model, tokenizer, train_dataset, val_dataset):
         save_safetensors=True,
         lr_scheduler_type="cosine",
         seed=43,
-        load_best_model_at_end=True,
         push_to_hub=False,
     )
 
