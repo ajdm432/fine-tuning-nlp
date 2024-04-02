@@ -117,7 +117,7 @@ def train(model, tokenizer, train_dataset, val_dataset):
     # train params
     training_arguments = TrainingArguments(
         per_device_train_batch_size=2,
-        gradient_accumulation_steps=4,
+        gradient_accumulation_steps=2,
         optim="paged_adamw_32bit",
         warmup_steps=100,
         learning_rate=1e-4,
