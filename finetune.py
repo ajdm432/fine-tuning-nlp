@@ -92,7 +92,7 @@ def load_trained_model_and_tokenizer():
     )
     return model, tokenizer
 
-def train(model, tokenizer, train_dataset, val_dataset):
+def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_name=None):
     # format dataset
     # train_dataset = train_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
     # val_dataset = val_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
@@ -154,8 +154,12 @@ def train(model, tokenizer, train_dataset, val_dataset):
     )
 
     # begin training
-    print(f"Beginning Model Training...")
-    trainer.train()
+    if checkpoint:
+        print(f"Beginning Model Training From Checkpoint...")
+        trainer.train(checkpoint_name)
+    else:
+        print(f"Beginning Model Training From Scratch...")
+        trainer.train()
     print(f"Beginning Model Evaluation...")
     trainer.evaluate()
     # save tokenizer at same location as model for unsloth
@@ -167,19 +171,26 @@ if __name__=='__main__':
     argparser = argparse.ArgumentParser()
     argparser.add_argument("-t", "--train", dest="do_training", default=False, action="store_true")
     argparser.add_argument("-b", "--use-base", dest="use_base", default=False, action="store_true")
+    argparser.add_argument("-c", "--use-checkpoint", dest="use_checkpoint", default=None, type=str)
     opts = argparser.parse_args()
 
-    if (not os.path.isdir(TRAINED_MODEL_FILE) or opts.do_training) and not opts.use_base:
-        print("Could not find trained model file, begining training...")
+    if opts.use_checkpoint is not None:
         traindata, valdata, testdata = load_data()
         model, tokenizer = load_base_model_and_tokenizer()
-        model.config.use_cache = False
-        train(model, tokenizer, traindata, valdata)
+        train(model, tokenizer, traindata, valdata, checkpoint=True, checkpoint_name=opts.use_checkpoint)
+        model, tokenizer = load_trained_model_and_tokenizer()
     else:
-        _, _, testdata = load_data()
-        if opts.use_base:
+        if (not os.path.isdir(TRAINED_MODEL_FILE) or opts.do_training) and not opts.use_base:
+            print("Could not find trained model file, begining training...")
+            traindata, valdata, testdata = load_data()
             model, tokenizer = load_base_model_and_tokenizer()
+            model.config.use_cache = False
+            train(model, tokenizer, traindata, valdata, checkpoint=False)
         else:
-            model, tokenizer = load_trained_model_and_tokenizer()
+            _, _, testdata = load_data()
+            if opts.use_base:
+                model, tokenizer = load_base_model_and_tokenizer()
+            else:
+                model, tokenizer = load_trained_model_and_tokenizer()
     FastLanguageModel.for_inference(model)
     evaluate_model(model, tokenizer, testdata)
