@@ -124,7 +124,7 @@ def train(model, tokenizer, train_dataset, val_dataset):
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
         num_train_epochs=2,
-        Auation_strategy="steps",
+        evaluation_strategy="steps",
         eval_steps=100,
         do_eval=True,
         save_strategy="steps",
