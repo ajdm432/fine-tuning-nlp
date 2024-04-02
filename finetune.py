@@ -116,8 +116,8 @@ def train(model, tokenizer, train_dataset, val_dataset):
 
     # train params
     training_arguments = TrainingArguments(
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=1,
+        per_device_train_batch_size=2,
+        gradient_accumulation_steps=4,
         optim="paged_adamw_32bit",
         warmup_ratio=0.1,
         logging_steps=500,
@@ -125,8 +125,8 @@ def train(model, tokenizer, train_dataset, val_dataset):
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
         max_grad_norm=0.3,
-        num_train_epochs=3,
-        evaluation_strategy="epoch",
+        num_train_epochs=1,
+        # evaluation_strategy="epoch",
         eval_steps=0.2,
         weight_decay=0.1,
         save_strategy="epoch",
