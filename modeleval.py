@@ -23,7 +23,7 @@ def example_input_output(model, tokenizer, data):
         prompt = promptify_single(data["article"][i])
         print("INPUT:")
         print(prompt)
-        tokens = tokenizer(prompt, padding=True, truncation=True, return_tensors='pt')
+        tokens = tokenizer(prompt, return_tensors='pt')
         tok_len = tokens["input_ids"].shape[1]
         # model_out = model.generate(**tokens,
         #                            do_sample=True,
@@ -34,12 +34,9 @@ def example_input_output(model, tokenizer, data):
         #                            pad_token_id=tokenizer.eos_token_id)
         model_out = model.generate(**tokens,
                                    max_new_tokens=MAX_OUT_LENGTH,
-                                   pad_token_id=tokenizer.unk_token_id,
-                                   eos_token_id=tokenizer.eos_token_id,
-                                   do_sample=True,
-                                   early_stopping=True)
+                                   pad_token_id=tokenizer.eos_token_id)
         new_tokens = model_out[0, tok_len:]
-        output = tokenizer.decode(new_tokens, skip_special_tokens=True)
+        output = tokenizer.decode(new_tokens)
         print("OUTPUT:")
         print(output)
 

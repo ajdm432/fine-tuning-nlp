@@ -47,13 +47,15 @@ def load_data():
         test_data = data["test"]
     return train_data, val_data, test_data
 
-def promptify_data(examples):
-    # inputs = [f"Article: {article}\nSummary:" for article in examples["article"]]
-    # model_inputs = tokenizer(inputs, max_length=MAX_SEQ_LENGTH, truncation=True)
-    # labels = tokenizer(examples["highlights"], max_length=MAX_SEQ_LENGTH, truncation=True)
-    # model_inputs["labels"] = labels["input_ids"]
-    # return model_inputs
-    return [f"### Article: {examples['article'][i]}\n### Summary: {examples['highlights'][i]}" for i in range(len(examples["article"]))]
+def promptify_data(examples, tokenizer):
+    articles = examples['article']
+    summaries = examples['highlights']
+    texts = []
+    for article, summary in zip(articles, summaries):
+        text = f"### Article: {article}\n### Summary: {summary}" + tokenizer.eos_token
+        texts.append(text)
+    return {"text" : texts,}
+
 
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL}...")
@@ -67,9 +69,9 @@ def load_base_model_and_tokenizer():
         )
         model.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
         tokenizer.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
-        tokenizer.pad_token = tokenizer.unk_token
-        tokenizer.pad_token_id = tokenizer.unk_token_id
-        tokenizer.padding_side = "right"
+        # tokenizer.pad_token = tokenizer.unk_token
+        # tokenizer.pad_token_id = tokenizer.unk_token_id
+        # tokenizer.padding_side = "right"
     else:
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name=BASE_MODEL_FILE,
@@ -78,9 +80,9 @@ def load_base_model_and_tokenizer():
             load_in_4bit=True,
             cache_dir=None,
         )
-        tokenizer.pad_token = tokenizer.unk_token
-        tokenizer.pad_token_id = tokenizer.unk_token_id
-        tokenizer.padding_side = "right"
+        # tokenizer.pad_token = tokenizer.unk_token
+        # tokenizer.pad_token_id = tokenizer.unk_token_id
+        # tokenizer.padding_side = "right"
     return model, tokenizer
 
 def load_trained_model_and_tokenizer():
@@ -96,8 +98,8 @@ def load_trained_model_and_tokenizer():
 
 def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_name=None):
     # format dataset
-    # train_dataset = train_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
-    # val_dataset = val_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
+    train_dataset = train_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
+    val_dataset = val_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
 
     # peft params
     lora_alpha = 16
@@ -120,11 +122,12 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         per_device_train_batch_size=8,
         gradient_accumulation_steps=2,
         optim="paged_adamw_32bit",
-        warmup_steps=100,
+        warmup_steps=5,
         learning_rate=1e-4,
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
         num_train_epochs=1,
+        weight_decay=0.01,
         evaluation_strategy="steps",
         eval_steps=100,
         do_eval=True,
@@ -139,21 +142,21 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         max_steps=3000,
     )
 
-    context_response_template = "\n### Summary:"
-    response_template_ids = tokenizer.encode(context_response_template, add_special_tokens=False)[2:]
-    collator = DataCollatorForCompletionOnlyLM(response_template_ids, tokenizer=tokenizer, mlm=False)
+    # context_response_template = "\n### Summary:"
+    # response_template_ids = tokenizer.encode(context_response_template, add_special_tokens=False)[2:]
+    # collator = DataCollatorForCompletionOnlyLM(response_template_ids, tokenizer=tokenizer, mlm=False)
 
     print(f"Creating Trainer...")
     # create trainer object
     trainer = SFTTrainer(
         model=model,
+        tokenizer=tokenizer,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
+        dataset_text_field="text",
         max_seq_length=MAX_SEQ_LENGTH,
         args=training_arguments,
         packing=False,
-        formatting_func=promptify_data,
-        data_collator=collator,
     )
 
     # begin training
