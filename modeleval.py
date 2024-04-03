@@ -38,7 +38,7 @@ def example_input_output(model, tokenizer, data):
                                    do_sample=True,
                                    early_stopping=True)
         new_tokens = model_out[0, tok_len:]
-        output = tokenizer.decode(new_tokens, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+        output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         print("OUTPUT:")
         print(output)
 
