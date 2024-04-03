@@ -121,7 +121,7 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         lora_alpha=lora_alpha,
         lora_dropout=0.5,
         bias="none",
-        taskt_type="CAUSAL_LM"
+        task_type="CAUSAL_LM"
     )
 
     # train params
