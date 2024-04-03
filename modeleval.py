@@ -36,7 +36,7 @@ def example_input_output(model, tokenizer, data):
                                    max_new_tokens=MAX_OUT_LENGTH,
                                    pad_token_id=tokenizer.eos_token_id)
         new_tokens = model_out[0, tok_len:]
-        output = tokenizer.decode(new_tokens)
+        output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         print("OUTPUT:")
         print(output)
         print("Output Length: ", new_tokens.shape[0])
