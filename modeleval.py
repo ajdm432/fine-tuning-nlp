@@ -33,14 +33,9 @@ def example_input_output(model, tokenizer, data):
         #                            max_new_tokens=MAX_OUT_LENGTH,
         #                            pad_token_id=tokenizer.eos_token_id)
         model_out = model.generate(**tokens,
-                                   do_sample=True,
-                                   max_new_tokens=MAX_OUT_LENGTH,
-                                   pad_token_id=tokenizer.eos_token_id,
-                                   num_beams=5,
-                                #    no_repeat_ngram_size=5,
-                                   early_stopping=True)
+                                   max_length=MAX_OUT_LENGTH)
         new_tokens = model_out[0, tok_len:]
-        output = tokenizer.decode(new_tokens, skip_special_tokens=True)
+        output = tokenizer.decode(new_tokens, skip_special_tokens=True, clean_up_tokenization_spaces=False)
         print("OUTPUT:")
         print(output)
 
@@ -64,7 +59,7 @@ def rouge_test(model, tokenizer, data):
                                    do_sample=True,
                                    max_new_tokens=MAX_OUT_LENGTH,
                                    pad_token_id=tokenizer.eos_token_id,
-                                   num_beams=5,
+                                #    num_beams=5,
                                 #    no_repeat_ngram_size=5,
                                    early_stopping=True)
         new_tokens = model_out[0, tok_len:]
