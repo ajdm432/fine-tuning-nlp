@@ -4,9 +4,13 @@ from datasets import load_dataset, load_from_disk, disable_caching
 from unsloth import FastLanguageModel
 from transformers import (
     TrainingArguments,
+    BitsAndBytesConfig,
+    AutoModelForCausalLM,
+    AutoTokenizer,
 )
-from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
+from trl import SFTTrainer
 from modeleval import evaluate_model
+from peft import prepare_model_for_kbit_training, LoraConfig
 
 os.environ['HF_HOME'] = '.'
 disable_caching()
@@ -15,7 +19,7 @@ disable_caching()
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # Set up training info
-BASE_MODEL = "unsloth/mistral-7b-bnb-4bit"
+BASE_MODEL = "sarvamai/OpenHathi-7B-Hi-v0.1-Base"
 
 # 3 splits, "train" (287k rows), "validation" (13.4k rows), and "test" (11.5k rows)
 DATASET = "cnn_dailymail"
@@ -52,37 +56,39 @@ def promptify_data(examples, tokenizer):
     summaries = examples['highlights']
     texts = []
     for article, summary in zip(articles, summaries):
-        text = f"### Article: {article}\n### Summary: {summary}" + tokenizer.eos_token
+        text = f"### Article: {article}\n### Summary: {summary}"
         texts.append(text)
     return {"text" : texts,}
 
 
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL}...")
+    bnb_config = BitsAndBytesConfig(load_in_4bit=True,
+                                    bnb_4bit_quant_type="nf4",
+                                    bnb_4bit_compute_dtype=getattr(torch, "float16"),
+                                    bnb_4bit_use_double_quant=True)
     if not os.path.isdir(BASE_MODEL_FILE):
-        model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name=BASE_MODEL,
+        model = AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL,
             max_seq_length=MAX_SEQ_LENGTH,
-            dtype=None,
-            load_in_4bit=True,
+            quantization_config=bnb_config,
             cache_dir=None,
+            device_map={"": 0}
         )
         model.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
-        tokenizer.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
-        # tokenizer.pad_token = tokenizer.unk_token
-        # tokenizer.pad_token_id = tokenizer.unk_token_id
-        # tokenizer.padding_side = "right"
     else:
-        model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name=BASE_MODEL_FILE,
+        model, tokenizer = AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL_FILE,
             max_seq_length=MAX_SEQ_LENGTH,
-            dtype=None,
-            load_in_4bit=True,
+            quantization_config=bnb_config,
             cache_dir=None,
+            device_map={"": 0}
         )
-        # tokenizer.pad_token = tokenizer.unk_token
-        # tokenizer.pad_token_id = tokenizer.unk_token_id
-        # tokenizer.padding_side = "right"
+    model = prepare_model_for_kbit_training(model)
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_FILE, use_faset=True, add_eos_token=True)
+    tokenizer.pad_token = tokenizer.unk_token
+    tokenizer.pad_token_id = tokenizer.unk_token_id
+    tokenizer.padding_side = "left"
     return model, tokenizer
 
 def load_trained_model_and_tokenizer():
@@ -105,16 +111,14 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
     lora_alpha = 16
     lora_r = 16
     
-    model = FastLanguageModel.get_peft_model(
-        model,
+    peft_config = LoraConfig(
         r=lora_r,
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                      "gate_proj", "up_proj", "down_proj",],
+        target_modules=["gate_proj", "up_proj", "down_proj",],
         lora_alpha=lora_alpha,
-        lora_dropout=0,
+        lora_dropout=0.5,
+        bias="none",
         random_state=43,
-        use_rslora=False,
-        loftq_config=None
+        taskt_type="CAUSAL_LM"
     )
 
     # train params
@@ -142,10 +146,6 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         max_steps=3000,
     )
 
-    # context_response_template = "\n### Summary:"
-    # response_template_ids = tokenizer.encode(context_response_template, add_special_tokens=False)[2:]
-    # collator = DataCollatorForCompletionOnlyLM(response_template_ids, tokenizer=tokenizer, mlm=False)
-
     print(f"Creating Trainer...")
     # create trainer object
     trainer = SFTTrainer(
@@ -153,11 +153,11 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         tokenizer=tokenizer,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
+        peft_config=peft_config,
         dataset_text_field="text",
         max_seq_length=MAX_SEQ_LENGTH,
         args=training_arguments,
         packing=False,
-        dataset_num_proc=2,
     )
 
     # begin training
