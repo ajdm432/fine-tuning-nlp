@@ -80,7 +80,7 @@ def load_base_model_and_tokenizer():
             cache_dir=None,
             device_map={"": 0}
         )
-    load_model = prepare_model_for_kbit_training(model)
+    load_model = prepare_model_for_kbit_training(load_model)
     load_tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_FILE, use_fast=True, add_eos_token=True)
     load_tokenizer.pad_token = load_tokenizer.unk_token
     load_tokenizer.pad_token_id = load_tokenizer.unk_token_id
