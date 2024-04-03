@@ -157,6 +157,7 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         max_seq_length=MAX_SEQ_LENGTH,
         args=training_arguments,
         packing=False,
+        dataset_num_proc=2,
     )
 
     # begin training

@@ -39,6 +39,7 @@ def example_input_output(model, tokenizer, data):
         output = tokenizer.decode(new_tokens)
         print("OUTPUT:")
         print(output)
+        print("Output Length: ", new_tokens.shape[0])
 
 
 def rouge_test(model, tokenizer, data):
