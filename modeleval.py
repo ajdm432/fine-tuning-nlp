@@ -35,7 +35,6 @@ def example_input_output(model, tokenizer, data):
         print("OUTPUT:")
         print(output)
 
-# test
 def rouge_test(model, tokenizer, data):
     print("\nTesting Model...\n")
     outputs = []
