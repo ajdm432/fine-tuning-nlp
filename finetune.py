@@ -62,54 +62,48 @@ def promptify_data(examples, tokenizer):
 
 def load_base_model_and_tokenizer():
     print(f"Loading Base Model {BASE_MODEL}...")
-    bnb_config = BitsAndBytesConfig(load_in_4bit=True,
+    if not os.path.isdir(BASE_MODEL_FILE):
+        bnb_config = BitsAndBytesConfig(load_in_4bit=True,
                                     bnb_4bit_quant_type="nf4",
                                     bnb_4bit_compute_dtype=getattr(torch, "float16"),
                                     bnb_4bit_use_double_quant=True)
-    if not os.path.isdir(BASE_MODEL_FILE):
-        model = AutoModelForCausalLM.from_pretrained(
+        load_model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL,
             quantization_config=bnb_config,
             cache_dir=None,
             device_map={"": 0}
         )
-        model.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
+        load_model.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
     else:
-        model = AutoModelForCausalLM.from_pretrained(
+        load_model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL_FILE,
-            quantization_config=bnb_config,
             cache_dir=None,
             device_map={"": 0}
         )
-    model = prepare_model_for_kbit_training(model)
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_FILE, use_fast=True, add_eos_token=True)
-    tokenizer.pad_token = tokenizer.unk_token
-    tokenizer.pad_token_id = tokenizer.unk_token_id
-    tokenizer.padding_side = "left"
-    return model, tokenizer
+    load_model = prepare_model_for_kbit_training(model)
+    load_tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_FILE, use_fast=True, add_eos_token=True)
+    load_tokenizer.pad_token = load_tokenizer.unk_token
+    load_tokenizer.pad_token_id = load_tokenizer.unk_token_id
+    load_tokenizer.padding_side = "left"
+    return load_model, load_tokenizer
 
 def load_trained_model_and_tokenizer():
     print(f"Loading Saved Model...")
-    bnb_config = BitsAndBytesConfig(load_in_4bit=True,
-                                    bnb_4bit_quant_type="nf4",
-                                    bnb_4bit_compute_dtype=getattr(torch, "float16"),
-                                    bnb_4bit_use_double_quant=True)
-    model = AutoModelForCausalLM.from_pretrained(
+    load_model = AutoModelForCausalLM.from_pretrained(
             TRAINED_MODEL_FILE,
-            quantization_config=bnb_config,
             cache_dir=None,
             device_map={"": 0}
         )
-    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, use_fast=True, add_eos_token=True)
-    tokenizer.pad_token = tokenizer.unk_token
-    tokenizer.pad_token_id = tokenizer.unk_token_id
-    tokenizer.padding_side = "left"
-    return model, tokenizer
+    load_tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, use_fast=True, add_eos_token=True)
+    load_tokenizer.pad_token = load_tokenizer.unk_token
+    load_tokenizer.pad_token_id = load_tokenizer.unk_token_id
+    load_tokenizer.padding_side = "left"
+    return load_model, load_tokenizer
 
-def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_name=None):
+def train(train_model, train_tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_name=None):
     # format dataset
-    train_dataset = train_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
-    val_dataset = val_dataset.map(lambda x: promptify_data(x, tokenizer), batched=True)
+    train_dataset = train_dataset.map(lambda x: promptify_data(x, train_tokenizer), batched=True)
+    val_dataset = val_dataset.map(lambda x: promptify_data(x, train_tokenizer), batched=True)
 
     # peft params
     lora_alpha = 16
@@ -126,7 +120,7 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
 
     # train params
     training_arguments = TrainingArguments(
-        per_device_train_batch_size=8,
+        per_device_train_batch_size=4,
         gradient_accumulation_steps=2,
         optim="paged_adamw_32bit",
         warmup_steps=5,
@@ -152,8 +146,8 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
     print(f"Creating Trainer...")
     # create trainer object
     trainer = SFTTrainer(
-        model=model,
-        tokenizer=tokenizer,
+        model=train_model,
+        tokenizer=train_tokenizer,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         peft_config=peft_config,
@@ -173,8 +167,8 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
     print(f"Beginning Model Evaluation...")
     trainer.evaluate()
     # save tokenizer at same location as model for unsloth
-    model.save_pretrained(TRAINED_MODEL_FILE, cache_dir=None)
-    tokenizer.save_pretrained(TRAINED_MODEL_FILE, cache_dir=None)
+    train_model.save_pretrained(TRAINED_MODEL_FILE, cache_dir=None)
+    train_tokenizer.save_pretrained(TRAINED_MODEL_FILE, cache_dir=None)
 
 if __name__=='__main__':
     # define argument options
@@ -198,7 +192,7 @@ if __name__=='__main__':
                 load_in_4bit=True,
                 cache_dir=None,
             )
-            tokenizer = AutoTokenizer(opts.use_checkpoint, use_fast=True, add_eos_token=True)
+            tokenizer = AutoTokenizer.from_pretrained(opts.use_checkpoint, use_fast=True, add_eos_token=True)
             evaluate_model(model, tokenizer, testdata)
     else:
         if (not os.path.isdir(TRAINED_MODEL_FILE) or opts.do_training) and not opts.use_base:
