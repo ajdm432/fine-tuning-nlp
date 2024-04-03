@@ -70,7 +70,6 @@ def load_base_model_and_tokenizer():
     if not os.path.isdir(BASE_MODEL_FILE):
         model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL,
-            max_seq_length=MAX_SEQ_LENGTH,
             quantization_config=bnb_config,
             cache_dir=None,
             device_map={"": 0}
@@ -79,7 +78,6 @@ def load_base_model_and_tokenizer():
     else:
         model, tokenizer = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL_FILE,
-            max_seq_length=MAX_SEQ_LENGTH,
             quantization_config=bnb_config,
             cache_dir=None,
             device_map={"": 0}
@@ -117,7 +115,6 @@ def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_n
         lora_alpha=lora_alpha,
         lora_dropout=0.5,
         bias="none",
-        random_state=43,
         taskt_type="CAUSAL_LM"
     )
 
