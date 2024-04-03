@@ -39,7 +39,6 @@ def example_input_output(model, tokenizer, data):
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         print("OUTPUT:")
         print(output)
-        print("Output Length: ", new_tokens.shape[0])
 
 
 def rouge_test(model, tokenizer, data):
@@ -48,7 +47,7 @@ def rouge_test(model, tokenizer, data):
     targets = data["highlights"]
     for model_in in tqdm(data["article"]):
         prompt = promptify_single(model_in)
-        tokens = tokenizer(prompt, padding=True, truncation=True, return_tensors='pt')
+        tokens = tokenizer(prompt, return_tensors='pt')
         tok_len = tokens["input_ids"].shape[1]
         # model_out = model.generate(**tokens,
         #                            do_sample=True,
@@ -59,9 +58,7 @@ def rouge_test(model, tokenizer, data):
         #                            pad_token_id=tokenizer.eos_token_id)
         model_out = model.generate(**tokens,
                                    max_new_tokens=MAX_OUT_LENGTH,
-                                   pad_token_id=tokenizer.unk_token_id,
-                                   do_sample=True,
-                                   early_stopping=True)
+                                   pad_token_id=tokenizer.eos_token_id)
         new_tokens = model_out[0, tok_len:]
         output = tokenizer.decode(new_tokens, skip_special_tokens=True)
         outputs.append(output)
