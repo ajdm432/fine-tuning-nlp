@@ -82,7 +82,7 @@ def load_base_model_and_tokenizer():
             device_map={"": 0}
         )
     model = prepare_model_for_kbit_training(model)
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_FILE, use_faset=True, add_eos_token=True)
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_FILE, use_fast=True, add_eos_token=True)
     tokenizer.pad_token = tokenizer.unk_token
     tokenizer.pad_token_id = tokenizer.unk_token_id
     tokenizer.padding_side = "left"
@@ -100,7 +100,7 @@ def load_trained_model_and_tokenizer():
             cache_dir=None,
             device_map={"": 0}
         )
-    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, use_faset=True, add_eos_token=True)
+    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, use_fast=True, add_eos_token=True)
     tokenizer.pad_token = tokenizer.unk_token
     tokenizer.pad_token_id = tokenizer.unk_token_id
     tokenizer.padding_side = "left"
@@ -192,14 +192,13 @@ if __name__=='__main__':
             train(model, tokenizer, traindata, valdata, checkpoint=True, checkpoint_name=opts.use_checkpoint)
             model, tokenizer = load_trained_model_and_tokenizer()
         else:
-            model, tokenizer = FastLanguageModel.from_pretrained(
-                model_name=opts.use_checkpoint,
-                max_seq_length=MAX_SEQ_LENGTH,
+            model = AutoModelForCausalLM.from_pretrained(
+                opts.use_checkpoint,
                 dtype=None,
                 load_in_4bit=True,
                 cache_dir=None,
             )
-            FastLanguageModel.for_inference(model)
+            tokenizer = AutoTokenizer(opts.use_checkpoint, use_fast=True, add_eos_token=True)
             evaluate_model(model, tokenizer, testdata)
     else:
         if (not os.path.isdir(TRAINED_MODEL_FILE) or opts.do_training) and not opts.use_base:
@@ -214,5 +213,4 @@ if __name__=='__main__':
                 model, tokenizer = load_base_model_and_tokenizer()
             else:
                 model, tokenizer = load_trained_model_and_tokenizer()
-        FastLanguageModel.for_inference(model)
         evaluate_model(model, tokenizer, testdata)
