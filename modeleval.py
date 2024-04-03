@@ -35,6 +35,7 @@ def example_input_output(model, tokenizer, data):
         model_out = model.generate(**tokens,
                                    max_new_tokens=MAX_OUT_LENGTH,
                                    pad_token_id=tokenizer.unk_token_id,
+                                   eos_token_id=tokenizer.eos_token_id,
                                    do_sample=True,
                                    early_stopping=True)
         new_tokens = model_out[0, tok_len:]
