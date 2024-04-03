@@ -3,7 +3,7 @@ import evaluate
 import torch
 
 METRIC = "rouge"
-NUM_EXAMPLES = 3
+NUM_EXAMPLES = 5
 MAX_SEQ_LENGTH = 4096
 MAX_OUT_LENGTH = 1000
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"

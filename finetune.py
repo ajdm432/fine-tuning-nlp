@@ -175,13 +175,25 @@ if __name__=='__main__':
     argparser.add_argument("-t", "--train", dest="do_training", default=False, action="store_true")
     argparser.add_argument("-b", "--use-base", dest="use_base", default=False, action="store_true")
     argparser.add_argument("-c", "--use-checkpoint", dest="use_checkpoint", default=None, type=str)
+    argparser.add_argument("-e", "--eval_checkpoint", dest="eval_checkpoint", default=False, action="store_true")
     opts = argparser.parse_args()
 
     if opts.use_checkpoint is not None:
         traindata, valdata, testdata = load_data()
-        model, tokenizer = load_base_model_and_tokenizer()
-        train(model, tokenizer, traindata, valdata, checkpoint=True, checkpoint_name=opts.use_checkpoint)
-        model, tokenizer = load_trained_model_and_tokenizer()
+        if not opts.eval_checkpoint:
+            model, tokenizer = load_base_model_and_tokenizer()
+            train(model, tokenizer, traindata, valdata, checkpoint=True, checkpoint_name=opts.use_checkpoint)
+            model, tokenizer = load_trained_model_and_tokenizer()
+        else:
+            model, tokenizer = FastLanguageModel.from_pretrained(
+                model_name=opts.use_checkpoint,
+                max_seq_length=MAX_SEQ_LENGTH,
+                dtype=None,
+                load_in_4bit=True,
+                cache_dir=None,
+            )
+            FastLanguageModel.for_inference(model)
+            evaluate_model(model, tokenizer, testdata)
     else:
         if (not os.path.isdir(TRAINED_MODEL_FILE) or opts.do_training) and not opts.use_base:
             print("Could not find trained model file, begining training...")
@@ -195,5 +207,5 @@ if __name__=='__main__':
                 model, tokenizer = load_base_model_and_tokenizer()
             else:
                 model, tokenizer = load_trained_model_and_tokenizer()
-    FastLanguageModel.for_inference(model)
-    evaluate_model(model, tokenizer, testdata)
+        FastLanguageModel.for_inference(model)
+        evaluate_model(model, tokenizer, testdata)
