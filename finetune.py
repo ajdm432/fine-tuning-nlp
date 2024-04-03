@@ -1,7 +1,6 @@
 import argparse, os
 import torch
 from datasets import load_dataset, load_from_disk, disable_caching
-from unsloth import FastLanguageModel
 from transformers import (
     TrainingArguments,
     BitsAndBytesConfig,
@@ -76,7 +75,7 @@ def load_base_model_and_tokenizer():
         )
         model.save_pretrained(BASE_MODEL_FILE, cache_dir=None)
     else:
-        model, tokenizer = AutoModelForCausalLM.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL_FILE,
             quantization_config=bnb_config,
             cache_dir=None,
@@ -91,13 +90,20 @@ def load_base_model_and_tokenizer():
 
 def load_trained_model_and_tokenizer():
     print(f"Loading Saved Model...")
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        TRAINED_MODEL_FILE,
-        max_seq_length=MAX_SEQ_LENGTH,
-        dtype=None,
-        load_in_4bit=True,
-        cache_dir=None,
-    )
+    bnb_config = BitsAndBytesConfig(load_in_4bit=True,
+                                    bnb_4bit_quant_type="nf4",
+                                    bnb_4bit_compute_dtype=getattr(torch, "float16"),
+                                    bnb_4bit_use_double_quant=True)
+    model = AutoModelForCausalLM.from_pretrained(
+            TRAINED_MODEL_FILE,
+            quantization_config=bnb_config,
+            cache_dir=None,
+            device_map={"": 0}
+        )
+    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODEL_FILE, use_faset=True, add_eos_token=True)
+    tokenizer.pad_token = tokenizer.unk_token
+    tokenizer.pad_token_id = tokenizer.unk_token_id
+    tokenizer.padding_side = "left"
     return model, tokenizer
 
 def train(model, tokenizer, train_dataset, val_dataset, checkpoint, checkpoint_name=None):
