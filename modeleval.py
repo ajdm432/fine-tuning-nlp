@@ -11,7 +11,7 @@ DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 metric = evaluate.load(METRIC)
 
 def promptify_single(article):
-    return f"###Article: {article}\n### Summary:"
+    return f"### Article: {article}\n### Summary:"
 
 def evaluate_model(model, tokenizer, data):
     example_input_output(model, tokenizer, data)
